@@ -1,6 +1,10 @@
+import {
+    moduleName,
+} from '../index'
+
 import { ThriftDocument } from '@creditkarma/thrift-parser'
 
-export const transform = (ast: ThriftDocument) => `# Thrift module: tutorial
+export const transform = (fileName: string, ast: ThriftDocument) => `# Thrift module: ${moduleName(fileName)}
 
 \`\`\`
 The first thing to know about are types. The available types in Thrift are:
