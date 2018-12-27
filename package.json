@@ -4,7 +4,10 @@
   "description": "Generate Thrift Docs in Markdown, HTML, etc",
   "main": "./dist/bin/thriftdocs.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc",
+    "lint": "tslint src/**/*",
+    "test": "mocha ./dist/test/**/*.js --reporter dot",
+    "test:watch": "mocha ./dist/test/**/*.js --watch --reporter dot"
   },
   "keywords": [
     "thrift",
