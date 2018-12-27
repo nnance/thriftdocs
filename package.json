@@ -1,0 +1,29 @@
+{
+  "name": "thriftdocs",
+  "version": "1.0.0",
+  "description": "Generate Thrift Docs in Markdown, HTML, etc",
+  "main": "./dist/bin/thriftdocs.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "thrift",
+    "markdown",
+    "html"
+  ],
+  "author": "Nick Nance",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/chai": "^4.1.7",
+    "@types/mocha": "^5.2.5",
+    "@types/node": "^10.12.18",
+    "@types/thrift": "^0.10.7",
+    "chai": "^4.2.0",
+    "mocha": "^5.2.0",
+    "tslint": "^5.12.0",
+    "typescript": "^3.2.2"
+  },
+  "dependencies": {
+    "@creditkarma/thrift-parser": "^1.1.4"
+  }
+}
