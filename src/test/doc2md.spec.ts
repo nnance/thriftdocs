@@ -13,7 +13,7 @@ import {
     ThriftDocument,
 } from '@creditkarma/thrift-parser'
 
-import { Helpers } from '../index'
+import { buildDoc, IDocument } from '../index'
 
 import { transform  } from '../templates/markdown'
 
@@ -28,7 +28,7 @@ describe('When generating markdown', () => {
         const file = resolve(fixtureFile)
         const contents = fs.readFileSync(file, { encoding: 'utf-8' })
         const thriftDoc = parse(contents) as ThriftDocument
-        const helper = new Helpers(fixtureFile, thriftDoc)
+        const helper = buildDoc(fixtureFile, thriftDoc)
         results = transform(helper).split('\n')
     })
 

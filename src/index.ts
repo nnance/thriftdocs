@@ -22,8 +22,12 @@ import {
     VoidType,
 } from '@creditkarma/thrift-parser'
 
-export interface IMethod {
+export interface IDocNode {
+    comments?: string[]
     name: string
+}
+
+export interface IMethod extends IDocNode {
     params: Array<{
         name: string
         type: string,
@@ -31,9 +35,15 @@ export interface IMethod {
     return: string
 }
 
-export interface IService {
+export interface IService extends IDocNode {
     methods: IMethod[],
-    name: string
+}
+
+export interface IDocument {
+    constants: IDocNode[]
+    dataTypes: IDocNode[]
+    module: IDocNode
+    services: IService[]
 }
 
 type DataType = EnumDefinition | UnionDefinition | StructDefinition | TypedefDefinition
@@ -90,37 +100,38 @@ const transformField = (fld: SyntaxNode): string => {
     )
 }
 
-export class Helpers {
-    private fileName: string
-    private doc: ThriftDocument
+const filterCommentBlocks = (body: ThriftStatement[]) => body
+    .filter(isInclude)
+    .reduce((prev: Comment[], stmt) => prev.concat(stmt.comments), [])
+    .filter((_) => _.type = SyntaxType.CommentBlock) as CommentBlock[]
 
-    constructor(fileName: string, doc: ThriftDocument) {
-        this.fileName = fileName
-        this.doc = doc
-    }
+const findFirstComment = (_: CommentBlock) =>
+    Array.isArray(_.value) ? _.value[0].indexOf('first') > 0 : false
 
-    public module() {
-        const filterCommentBlocks = (body: ThriftStatement[]) => body
-            .filter(isInclude)
-            .reduce((prev: Comment[], stmt) => prev.concat(stmt.comments), [])
-            .filter((_) => _.type = SyntaxType.CommentBlock) as CommentBlock[]
+// empty comment lines start with *, remove it
+const fixEmptyComments = (lines: string[]) => lines.map((l) => l === '*' ? '' : l)
 
-        const findFirstComment = (_: CommentBlock) =>
-            Array.isArray(_.value) ? _.value[0].indexOf('first') > 0 : false
-
-        // empty comment lines start with *, remove it
-        const fixEmptyComments = (lines: string[]) => lines.map((l) => l === '*' ? '' : l)
-
-        return {
-            comments: filterCommentBlocks(this.doc.body)
+export const buildDoc = (fileName: string, doc: ThriftDocument): IDocument => {
+    return {
+        constants: doc.body
+            .filter(isConstant)
+            .sort((a, b) => sortAsc(a.name.value, b.name.value))
+            .map((_) => ({
+                name: _.name.value,
+            })),
+        dataTypes: doc.body
+            .filter(isDataType)
+            .sort((a, b) => sortAsc(a.name.value, b.name.value))
+            .map((t) => ({
+                name: t.name.value,
+            })),
+        module: {
+            comments: filterCommentBlocks(doc.body)
                 .filter(findFirstComment)
                 .reduce((prev, _) => prev.concat(fixEmptyComments(_.value)), [] as string[]),
-            name: parse(this.fileName).base.split('.')[0],
-        }
-    }
-
-    public services(): IService[] {
-        return this.doc.body
+            name: parse(fileName).base.split('.')[0],
+        },
+        services: doc.body
             .filter(isService)
             .map((_) => ({
                 methods: _.functions
@@ -132,23 +143,8 @@ export class Helpers {
                             type: transformField(p.fieldType),
                         })),
                         return: transformField(f.returnType),
-                    })),
+                    })) as IMethod[],
                 name: _.name.value,
-            }))
-    }
-
-    public dataTypes() {
-        return this.doc.body
-            .filter(isDataType)
-            .sort((a, b) => sortAsc(a.name.value, b.name.value))
-            .map((t) => ({
-                name: t.name.value,
-            }))
-    }
-
-    public constants() {
-        return this.doc.body
-            .filter(isConstant)
-            .sort((a, b) => sortAsc(a.name.value, b.name.value))
+            })) as IService[],
     }
 }

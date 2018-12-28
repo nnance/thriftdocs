@@ -1,28 +1,28 @@
 import {
-    Helpers,
+    IDocument,
     IMethod,
     IService,
 } from '../index'
 
 const methods = (_: IService) => _.methods.map((m) => m.name).join('<br>')
-const types = (_: Helpers) => _.dataTypes().map((t) => t.name).join('<br>')
-const consts = (_: Helpers) => _.constants().map((c) => c.name.value).join('<br>')
+const types = (_: IDocument) => _.dataTypes.map((t) => t.name).join('<br>')
+const consts = (_: IDocument) => _.constants.map((c) => c.name).join('<br>')
 const params = (m: IMethod) => m.params.map((p) => p.type + ' ' + p.name).join(', ')
 
-export const transform = (_: Helpers) => `
-# Thrift module: ${_.module().name}
+export const transform = (_: IDocument) => `
+# Thrift module: ${_.module.name}
 
-\`\`\`
-${_.module().comments.join('\n')}
-\`\`\`
+${_.module.comments ? `\`\`\`
+${_.module.comments.join('\n')}
+\`\`\`` : ''}
 
 Module | Services | Methods | Data types | Constants |
 --- | --- | --- | --- | --- |
-${_.services().map((s) => `${_.module().name} | ${s.name} | ${methods(s)} | ${types(_)} | ${consts(_)} |`)}
+${_.services.map((s) => `${_.module.name} | ${s.name} | ${methods(s)} | ${types(_)} | ${consts(_)} |`).join('')}
 
 ## Services
 
-${_.services().map((s) => `### ${s.name}
+${_.services.map((s) => `### ${s.name}
 
 ${s.methods.map((m) => `#### Function: ${m.name}
 
