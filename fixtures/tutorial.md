@@ -1,3 +1,4 @@
+
 # Thrift module: tutorial
 
 ```
@@ -18,9 +19,9 @@ The first thing to know about are types. The available types in Thrift are:
  Did you also notice that Thrift supports C style comments?
 ```
 
- Module | Services | Methods | Data types | Constants |
- --- | --- | --- | --- | --- |
- tutorial | Calculator | add<br>calculate<br>ping<br>zip | InvalidOperation<br>MyInteger<br>Operation<br>Work | INT32CONSTANT<br>MAPCONSTANT |
+Module | Services | Methods | Data types | Constants |
+--- | --- | --- | --- | --- |
+tutorial | Calculator | add<br>calculate<br>ping<br>zip | InvalidOperation<br>MyInteger<br>Operation<br>Work | INT32CONSTANT<br>MAPCONSTANT |
 
 ## Services
 
@@ -28,7 +29,7 @@ The first thing to know about are types. The available types in Thrift are:
 
 #### Function: add
 
-> i32 add(i32 num1, i32 num2) 
+> i32 add(i32 num1, i32 num2)
 
 #### Function: calculate
 
@@ -36,11 +37,11 @@ The first thing to know about are types. The available types in Thrift are:
 
 #### Function: ping
 
-> void ping() 
+> void ping()
 
 #### Function: zip
 
-> void zip() 
+> void zip()
 
 ## Data Structures
 
@@ -55,8 +56,8 @@ The first thing to know about are types. The available types in Thrift are:
 
 ### Exception: InvalidOperation
 Key	Field | Type |Description | Requiredness | Default value
-1 | whatOp | i32 | default	
-2 | why | string | default	
+1 | whatOp | i32 | default
+2 | why | string | default
 
 > Structs can also be exceptions, if they are nasty.
 

@@ -1,36 +1,36 @@
-import { Helpers } from '../index'
+import {
+    Helpers,
+    IMethod,
+    IService,
+} from '../index'
 
-export const transform = (_: Helpers) => `# Thrift module: ${_.module().name}
+const methods = (_: IService) => _.methods.map((m) => m.name).join('<br>')
+const types = (_: Helpers) => _.dataTypes().map((t) => t.name).join('<br>')
+const consts = (_: Helpers) => _.constants().map((c) => c.name.value).join('<br>')
+const params = (m: IMethod) => m.params.map((p) => p.type + ' ' + p.name).join(', ')
+
+export const transform = (_: Helpers) => `
+# Thrift module: ${_.module().name}
 
 \`\`\`
 ${_.module().comments.join('\n')}
 \`\`\`
 
- Module | Services | Methods | Data types | Constants |
- --- | --- | --- | --- | --- |
- ${_.module().name} | Calculator | add<br>calculate<br>ping<br>zip | InvalidOperation<br>MyInteger<br>Operation<br>Work | INT32CONSTANT<br>MAPCONSTANT |
+Module | Services | Methods | Data types | Constants |
+--- | --- | --- | --- | --- |
+${_.services().map((s) => `${_.module().name} | ${s.name} | ${methods(s)} | ${types(_)} | ${consts(_)} |`)}
 
 ## Services
 
-### Calculator
+${_.services().map((s) => `### ${s.name}
 
-#### Function: add
+${s.methods.map((m) => `#### Function: ${m.name}
 
-> i32 add(i32 num1, i32 num2) 
+> ${m.return} ${m.name}(${params(m)})
 
-#### Function: calculate
-
-> i32 calculate(i32 logid, [Work](#Work) w) throws [InvalidOperation](#InvalidOperation) ouch
-
-#### Function: ping
-
-> void ping() 
-
-#### Function: zip
-
-> void zip() 
-
-## Data Structures
+`).join('')
+}`).join('')
+}## Data Structures
 
 ### Struct: Work
 
@@ -43,8 +43,8 @@ ${_.module().comments.join('\n')}
 
 ### Exception: InvalidOperation
 Key	Field | Type |Description | Requiredness | Default value
-1 | whatOp | i32 | default	
-2 | why | string | default	
+1 | whatOp | i32 | default
+2 | why | string | default
 
 > Structs can also be exceptions, if they are nasty.
 
@@ -73,4 +73,4 @@ ADD | 1
 SUBTRACT | 2
 MULTIPLY | 3
 DIVIDE | 4
-`
+`}
