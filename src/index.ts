@@ -27,11 +27,14 @@ export interface IDocNode {
     name: string
 }
 
+export interface IDocField {
+    name: string
+    type: string
+}
+
 export interface IMethod extends IDocNode {
-    params: Array<{
-        name: string
-        type: string,
-    }>,
+    params: IDocField[]
+    throws: IDocField[]
     return: string
 }
 
@@ -143,6 +146,10 @@ export const buildDoc = (fileName: string, doc: ThriftDocument): IDocument => {
                             type: transformField(p.fieldType),
                         })),
                         return: transformField(f.returnType),
+                        throws: f.throws.map((t) => ({
+                            name: t.name.value,
+                            type: transformField(t.fieldType),
+                        })),
                     })) as IMethod[],
                 name: _.name.value,
             })) as IService[],

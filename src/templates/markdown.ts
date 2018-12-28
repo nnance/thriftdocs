@@ -8,6 +8,7 @@ const methods = (_: IService) => _.methods.map((m) => m.name).join('<br>')
 const types = (_: IDocument) => _.dataTypes.map((t) => t.name).join('<br>')
 const consts = (_: IDocument) => _.constants.map((c) => c.name).join('<br>')
 const params = (m: IMethod) => m.params.map((p) => p.type + ' ' + p.name).join(', ')
+const throws = (m: IMethod) => m.throws.length ? ' throws ' + m.throws.map((t) => t.type + ' ' + t.name).join(', ') : ''
 
 export const transform = (_: IDocument) => `
 # Thrift module: ${_.module.name}
@@ -26,7 +27,7 @@ ${_.services.map((s) => `### ${s.name}
 
 ${s.methods.map((m) => `#### Function: ${m.name}
 
-> ${m.return} ${m.name}(${params(m)})
+> ${m.return} ${m.name}(${params(m)})${throws(m)}
 
 `).join('')
 }`).join('')
