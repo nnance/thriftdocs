@@ -43,8 +43,8 @@ Key | Field | Type | Description | Required | Default value
 ${d.fields.map((f) => `${f.index} | ${f.name} | ${f.type} | ${f.comments} | ${f.required} | ${f.default}`).join('\n')}
 
 ${d.comments ? d.comments.map((c) => `> ${c}\n`).join('') : '\n'}
-`).join('')}
-## Types
+`).join('')
+}## Types
 
 ### Typedef: MyInteger (i32)
 
@@ -54,8 +54,8 @@ ${d.comments ? d.comments.map((c) => `> ${c}\n`).join('') : '\n'}
 
 Constant | Type | Value | Notes
 --- | --- | --- | ---
-INT32CONSTANT | i32 | 9853 | Thrift also lets you define constants for use across languages. Complex types and structs are specified using JSON notation.
-MAPCONSTANT | map<string,string> MAPCONSTANT | {'hello':'world', 'goodnight':'moon'}
+${_.constants.map((d) =>
+    `${d.name} | ${d.type} | ${d.value} | ${d.comments ? d.comments.join('<br>') : ''}`).join('\n')}
 
 ## Enumerations
 

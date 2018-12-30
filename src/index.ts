@@ -45,11 +45,17 @@ export interface IDocField extends IDocNode {
     type: string
     index?: number | string
     required?: string
+    value?: string
 }
 
 export interface IDataStruct extends IDocNode {
     fields: IDocField[]
-    type?: string
+    type: string
+}
+
+export interface IConstant extends IDocNode {
+    type: string
+    value: string
 }
 
 export interface IMethod extends IDocNode {
@@ -209,48 +215,41 @@ const transformComments = (_: Comment[]) => _
     .reduce((prev, b) => prev.concat(b.value), [] as string[])
     .map((l) => l === '*' ? '' : l)
 
+const docSection = (t: DataType | DataStruct): IDataStruct => ({
+    comments: transformComments(t.comments),
+    fields: isStructure(t) ? t.fields.map((f) => ({
+        comments: transformComments(f.comments),
+        default: f.defaultValue ? transformConst(f.defaultValue) : '',
+        index: f.fieldID ? f.fieldID.value : '',
+        name: f.name.value,
+        required: f.requiredness || '',
+        type: transformField(f.fieldType),
+    })) : [],
+    name: t.name.value,
+    type: t.type.split('Definition')[0],
+})
+
+const docConstant = (t: ConstDefinition): IConstant => ({
+    comments: transformComments(t.comments),
+    name: t.name.value,
+    type: transformField(t.fieldType),
+    value: transformConst(t.initializer),
+})
+
 export const buildDoc = (fileName: string, doc: ThriftDocument): IDocument => {
     return {
         constants: doc.body
             .filter(isConstant)
             .sort((a, b) => sortAsc(a.name.value, b.name.value))
-            .map((_) => ({
-                comments: transformComments(_.comments),
-                name: _.name.value,
-                type: transformField(_.fieldType),
-            })),
+            .map(docConstant),
         dataStructs: doc.body
             .filter(isStructure)
             .sort((a, b) => sortAsc(a.name.value, b.name.value))
-            .map((t) => ({
-                comments: transformComments(t.comments),
-                fields: isStructure(t) ? t.fields.map((f) => ({
-                    comments: transformComments(f.comments),
-                    default: f.defaultValue ? transformConst(f.defaultValue) : '',
-                    index: f.fieldID ? f.fieldID.value : '',
-                    name: f.name.value,
-                    required: f.requiredness || '',
-                    type: transformField(f.fieldType),
-                })) : [],
-                name: t.name.value,
-                type: t.type.split('Definition')[0],
-            })),
+            .map(docSection),
         dataTypes: doc.body
             .filter(isDataType)
             .sort((a, b) => sortAsc(a.name.value, b.name.value))
-            .map((t) => ({
-                comments: transformComments(t.comments),
-                fields: isStructure(t) ? t.fields.map((f) => ({
-                    comments: transformComments(f.comments),
-                    default: f.defaultValue ? transformConst(f.defaultValue) : '',
-                    index: f.fieldID ? f.fieldID.value : '',
-                    name: f.name.value,
-                    required: f.requiredness || '',
-                    type: transformField(f.fieldType),
-                })) : [],
-                name: t.name.value,
-                type: t.type.split('Definition')[0],
-            })),
+            .map(docSection),
         module: {
             comments: filterCommentBlocks(doc.body)
                 .filter(findFirstComment)

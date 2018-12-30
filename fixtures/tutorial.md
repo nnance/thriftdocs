@@ -71,7 +71,6 @@ Key | Field | Type | Description | Required | Default value
 >  in the serialized output if they aren't set.  Note that this requires some
 >  manual management in some languages.
 
-
 ## Types
 
 ### Typedef: MyInteger (i32)
@@ -82,14 +81,12 @@ Key | Field | Type | Description | Required | Default value
 
 Constant | Type | Value | Notes
 --- | --- | --- | ---
-INT32CONSTANT | i32 | 9853 | Thrift also lets you define constants for use across languages. Complex types and structs are specified using JSON notation.
+INT32CONSTANT | i32 | 9853 | Thrift also lets you define constants for use across languages. Complex<br> types and structs are specified using JSON notation.
 MAPCONSTANT | map<string,string> MAPCONSTANT | {'hello':'world', 'goodnight':'moon'}
 
 ## Enumerations
 
 ### Operation
-
-> You can define enums, which are just 32 bit integers. Values are optional and start at 1 if not supplied, C style again.
 
 Name | Value
 --- | ---
@@ -97,3 +94,5 @@ ADD | 1
 SUBTRACT | 2
 MULTIPLY | 3
 DIVIDE | 4
+
+> You can define enums, which are just 32 bit integers. Values are optional and start at 1 if not supplied, C style again.
