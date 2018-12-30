@@ -1,14 +1,17 @@
 import {
+    IDocField,
     IDocument,
     IMethod,
     IService,
 } from '../index'
 
+const fieldList = (_: IDocField[]) => _.map((p) => p.type + ' ' + p.name).join(', ')
+
 const methods = (_: IService) => _.methods.map((m) => m.name).join('<br>')
 const types = (_: IDocument) => _.dataTypes.map((t) => t.name).join('<br>')
 const consts = (_: IDocument) => _.constants.map((c) => c.name).join('<br>')
-const params = (m: IMethod) => m.params.map((p) => p.type + ' ' + p.name).join(', ')
-const throws = (m: IMethod) => m.throws.length ? ' throws ' + m.throws.map((t) => t.type + ' ' + t.name).join(', ') : ''
+const params = (m: IMethod) => fieldList(m.params)
+const throws = (m: IMethod) => m.throws.length ? ' throws ' + fieldList(m.throws) : ''
 
 export const transform = (_: IDocument) => `
 # Thrift module: ${_.module.name}
@@ -19,7 +22,7 @@ ${_.module.comments.join('\n')}
 
 Module | Services | Methods | Data types | Constants |
 --- | --- | --- | --- | --- |
-${_.services.map((s) => `${_.module.name} | ${s.name} | ${methods(s)} | ${types(_)} | ${consts(_)} |`).join('')}
+${_.services.map((s) => `${_.module.name} | ${s.name} | ${methods(s)} | ${types(_)} | ${consts(_)} |`).join('\n')}
 
 ## Services
 
@@ -33,22 +36,14 @@ ${s.methods.map((m) => `#### Function: ${m.name}
 }`).join('')
 }## Data Structures
 
-### Struct: Work
+${_.dataStructs.map((d) => `### ${d.type}: ${d.name}
 
- Key | Field | Type | Description | Required | Default value |
- --- | --- | --- | --- | --- | --- |
- 1 | num1 | i32 |  |  | 0 |
- 2 | num2 | i32 |  |  |  |
- 3 | op | [Operation](#Operation) |  |  |  |
- 4 | comment | string |  | optional |  |
+Key | Field | Type | Description | Required | Default value
+--- | --- | --- | --- | --- | ---
+${d.fields.map((f) => `${f.index} | ${f.name} | ${f.type} | ${f.comments} | ${f.required} | ${f.default}`).join('\n')}
 
-### Exception: InvalidOperation
-Key	Field | Type |Description | Requiredness | Default value
-1 | whatOp | i32 | default
-2 | why | string | default
-
-> Structs can also be exceptions, if they are nasty.
-
+${d.comments ? d.comments.map((c) => `> ${c}\n`).join('') : '\n'}
+`).join('')}
 ## Types
 
 ### Typedef: MyInteger (i32)
@@ -74,4 +69,4 @@ ADD | 1
 SUBTRACT | 2
 MULTIPLY | 3
 DIVIDE | 4
-`}
+`

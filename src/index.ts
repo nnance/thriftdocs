@@ -1,17 +1,30 @@
-import { parse } from 'path'
+import { readFileSync } from 'fs';
+import * as path from 'path'
 
 import {
     BaseType,
+    BooleanLiteral,
     Comment,
     CommentBlock,
     ConstDefinition,
+    ConstList,
+    ConstMap,
+    ConstValue,
+    DoubleConstant,
     EnumDefinition,
+    ExceptionDefinition,
+    ExponentialLiteral,
+    FloatLiteral,
+    HexLiteral,
     Identifier,
     IncludeDefinition,
+    IntConstant,
+    IntegerLiteral,
     ListType,
     MapType,
     ServiceDefinition,
     SetType,
+    StringLiteral,
     StructDefinition,
     SyntaxNode,
     SyntaxType,
@@ -23,13 +36,20 @@ import {
 } from '@creditkarma/thrift-parser'
 
 export interface IDocNode {
-    comments?: string[]
+    comments?: string[] | undefined
     name: string
 }
 
-export interface IDocField {
-    name: string
+export interface IDocField extends IDocNode {
+    default?: string | null
     type: string
+    index?: number | string
+    required?: string
+}
+
+export interface IDataStruct extends IDocNode {
+    fields: IDocField[]
+    type?: string
 }
 
 export interface IMethod extends IDocNode {
@@ -42,17 +62,26 @@ export interface IService extends IDocNode {
     methods: IMethod[],
 }
 
+export interface IModule extends IDocNode {
+    dataTypes: IDocField[]
+}
+
 export interface IDocument {
-    constants: IDocNode[]
-    dataTypes: IDocNode[]
-    module: IDocNode
+    constants: IDocField[]
+    dataStructs: IDataStruct[]
+    dataTypes: IDataStruct[]
+    module: IModule
     services: IService[]
 }
 
 type DataType = EnumDefinition | UnionDefinition | StructDefinition | TypedefDefinition
+type DataStruct = StructDefinition | ExceptionDefinition
 
 const isInclude = (_: ThriftStatement): _ is IncludeDefinition => _.type === SyntaxType.IncludeDefinition
 const isService = (_: ThriftStatement): _ is ServiceDefinition => _.type === SyntaxType.ServiceDefinition
+const isStructure = (_: ThriftStatement): _ is DataStruct =>
+    _.type === SyntaxType.ExceptionDefinition ||
+    _.type === SyntaxType.StructDefinition
 const isConstant = (_: ThriftStatement): _ is ConstDefinition => _.type === SyntaxType.ConstDefinition
 const isDataType = (_: ThriftStatement): _ is DataType =>
     _.type === SyntaxType.EnumDefinition ||
@@ -103,16 +132,82 @@ const transformField = (fld: SyntaxNode): string => {
     )
 }
 
+type LiteralValue = StringLiteral | BooleanLiteral | IntegerLiteral | HexLiteral |
+FloatLiteral | ExponentialLiteral
+
+const getLiteralVal = (fld: LiteralValue) => {
+    function literalTransform<U>(
+        r: LiteralValue,
+        e: (_: StringLiteral) => U,
+        f: (_: BooleanLiteral) => U,
+        g: (_: IntegerLiteral) => U,
+        h: (_: HexLiteral) => U,
+        i: (_: FloatLiteral) => U,
+        j: (_: ExponentialLiteral) => U,
+    ): U {
+        switch (r.type) {
+            case SyntaxType.StringLiteral: return e(r as StringLiteral)
+            case SyntaxType.BooleanLiteral: return f(r as BooleanLiteral)
+            case SyntaxType.IntegerLiteral: return g(r as IntegerLiteral)
+            case SyntaxType.HexLiteral: return h(r as HexLiteral)
+            case SyntaxType.FloatLiteral: return i(r as FloatLiteral)
+            case SyntaxType.ExponentialLiteral: return j(r as ExponentialLiteral)
+            default: return e(r)
+        }
+    }
+
+    return literalTransform(
+        fld,
+        (e) => `"${e.value}"`,
+        (f) => `${f.value}`,
+        (g) => `${g.value}`,
+        (h) => `#${h.value}`,
+        (i) => `${i.value}`,
+        (j) => `${j.value}`,
+    )
+}
+
+const transformConst = (fld: ConstValue) => {
+    function constTransform<U>(
+        r: ConstValue,
+        e: (_: ConstList) => U,
+        f: (_: ConstMap) => U,
+        g: (_: LiteralValue) => U,
+        z: (_: Identifier) => U,
+    ): U {
+        switch (r.type) {
+            case SyntaxType.ConstList: return e(r as ConstList)
+            case SyntaxType.ConstMap: return f(r as ConstMap)
+            case SyntaxType.DoubleConstant: return g((r as DoubleConstant).value)
+            case SyntaxType.IntConstant: return g((r as IntConstant).value)
+            default: return z(r as Identifier)
+        }
+    }
+
+    return constTransform(
+        fld,
+        (e) => `list<${transformField(e)}>`,
+        (f) => `map<${transformField(f)}>`,
+        getLiteralVal,
+        (z) => `[${z.value}](#${z.value})`,
+    )
+}
+
 const filterCommentBlocks = (body: ThriftStatement[]) => body
     .filter(isInclude)
     .reduce((prev: Comment[], stmt) => prev.concat(stmt.comments), [])
     .filter((_) => _.type = SyntaxType.CommentBlock) as CommentBlock[]
 
-const findFirstComment = (_: CommentBlock) =>
+const findFirstComment = (_: CommentBlock, index: number) =>
     Array.isArray(_.value) ? _.value[0].indexOf('first') > 0 : false
 
 // empty comment lines start with *, remove it
 const fixEmptyComments = (lines: string[]) => lines.map((l) => l === '*' ? '' : l)
+
+const transformComments = (_: Comment[]) => _
+    .filter((c) => c.type === SyntaxType.CommentBlock)
+    .reduce((prev, b) => prev.concat(b.value), [] as string[])
+    .map((l) => l === '*' ? '' : l)
 
 export const buildDoc = (fileName: string, doc: ThriftDocument): IDocument => {
     return {
@@ -120,19 +215,54 @@ export const buildDoc = (fileName: string, doc: ThriftDocument): IDocument => {
             .filter(isConstant)
             .sort((a, b) => sortAsc(a.name.value, b.name.value))
             .map((_) => ({
+                comments: transformComments(_.comments),
                 name: _.name.value,
+                type: transformField(_.fieldType),
+            })),
+        dataStructs: doc.body
+            .filter(isStructure)
+            .sort((a, b) => sortAsc(a.name.value, b.name.value))
+            .map((t) => ({
+                comments: transformComments(t.comments),
+                fields: isStructure(t) ? t.fields.map((f) => ({
+                    comments: transformComments(f.comments),
+                    default: f.defaultValue ? transformConst(f.defaultValue) : '',
+                    index: f.fieldID ? f.fieldID.value : '',
+                    name: f.name.value,
+                    required: f.requiredness || '',
+                    type: transformField(f.fieldType),
+                })) : [],
+                name: t.name.value,
+                type: t.type.split('Definition')[0],
             })),
         dataTypes: doc.body
             .filter(isDataType)
             .sort((a, b) => sortAsc(a.name.value, b.name.value))
             .map((t) => ({
+                comments: transformComments(t.comments),
+                fields: isStructure(t) ? t.fields.map((f) => ({
+                    comments: transformComments(f.comments),
+                    default: f.defaultValue ? transformConst(f.defaultValue) : '',
+                    index: f.fieldID ? f.fieldID.value : '',
+                    name: f.name.value,
+                    required: f.requiredness || '',
+                    type: transformField(f.fieldType),
+                })) : [],
                 name: t.name.value,
+                type: t.type.split('Definition')[0],
             })),
         module: {
             comments: filterCommentBlocks(doc.body)
                 .filter(findFirstComment)
                 .reduce((prev, _) => prev.concat(fixEmptyComments(_.value)), [] as string[]),
-            name: parse(fileName).base.split('.')[0],
+            dataTypes: doc.body
+                .filter(isDataType)
+                .sort((a, b) => sortAsc(a.name.value, b.name.value))
+                .map((t) => ({
+                    name: t.name.value,
+                    type: t.type.split('Definition')[0],
+                })),
+            name: path.parse(fileName).base.split('.')[0],
         },
         services: doc.body
             .filter(isService)

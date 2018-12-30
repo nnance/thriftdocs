@@ -45,21 +45,32 @@ tutorial | Calculator | add<br>calculate<br>ping<br>zip | InvalidOperation<br>My
 
 ## Data Structures
 
-### Struct: Work
-
- Key | Field | Type | Description | Required | Default value |
- --- | --- | --- | --- | --- | --- |
- 1 | num1 | i32 |  |  | 0 |
- 2 | num2 | i32 |  |  |  |
- 3 | op | [Operation](#Operation) |  |  |  |
- 4 | comment | string |  | optional |  |
-
 ### Exception: InvalidOperation
-Key	Field | Type |Description | Requiredness | Default value
-1 | whatOp | i32 | default
-2 | why | string | default
+
+Key | Field | Type | Description | Required | Default value
+--- | --- | --- | --- | --- | ---
+1 | whatOp | i32 |  |  | 
+2 | why | string |  |  | 
 
 > Structs can also be exceptions, if they are nasty.
+
+### Struct: Work
+
+Key | Field | Type | Description | Required | Default value
+--- | --- | --- | --- | --- | ---
+1 | num1 | i32 |  |  | 0
+2 | num2 | i32 |  |  | 
+3 | op | [Operation](#Operation) |  |  | 
+4 | comment | string |  | optional | 
+
+> Structs are the basic complex data structures. They are comprised of fields
+>  which each have an integer identifier, a type, a symbolic name, and an
+>  optional default value.
+> 
+>  Fields can be declared "optional", which ensures they will not be included
+>  in the serialized output if they aren't set.  Note that this requires some
+>  manual management in some languages.
+
 
 ## Types
 
