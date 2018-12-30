@@ -82,7 +82,7 @@ Key | Field | Type | Description | Required | Default value
 Constant | Type | Value | Notes
 --- | --- | --- | ---
 INT32CONSTANT | i32 | 9853 | Thrift also lets you define constants for use across languages. Complex<br> types and structs are specified using JSON notation.
-MAPCONSTANT | map<string,string> MAPCONSTANT | {'hello':'world', 'goodnight':'moon'}
+MAPCONSTANT | map<string,string> | {'hello':'world', 'goodnight':'moon'}
 
 ## Enumerations
 
