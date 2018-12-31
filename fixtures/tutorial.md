@@ -96,4 +96,5 @@ SUBTRACT | 2
 MULTIPLY | 3
 DIVIDE | 4
 
-> You can define enums, which are just 32 bit integers. Values are optional and start at 1 if not supplied, C style again.
+> You can define enums, which are just 32 bit integers. Values are optional
+>  and start at 1 if not supplied, C style again.

@@ -49,7 +49,7 @@ ${d.comments ? d.comments.map((c) => `> ${c}\n`).join('') : '\n'}
 ${_.typedDefs.map((d) => `### Typedef: ${d.name} (${d.type})
 
 ${d.comments ? d.comments.map((c) => `> ${c}\n`).join('') : '\n'}
-`).join('')
+`).join('\n')
 }## Constants
 
 Constant | Type | Value | Notes
@@ -59,14 +59,13 @@ ${_.constants.map((d) =>
 
 ## Enumerations
 
-### Operation
+${_.enums.map((d) => `### ${d.name}
 
 Name | Value
 --- | ---
-ADD | 1
-SUBTRACT | 2
-MULTIPLY | 3
-DIVIDE | 4
+${d.members.map((f) => `${f.name} | ${f.value}`).join('\n')}
 
-> You can define enums, which are just 32 bit integers. Values are optional and start at 1 if not supplied, C style again.
+${d.comments ? d.comments.map((c) => `> ${c}\n`).join('') : '\n'}
+`).join('')
+}
 `

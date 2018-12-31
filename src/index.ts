@@ -18,6 +18,7 @@ import {
 } from '@creditkarma/thrift-parser'
 
 import {
+    getLiteralVal,
     transformConst,
     transformField,
 } from './lib/transform'
@@ -49,6 +50,13 @@ export interface ITypedDefs extends IDocNode {
     type: string
 }
 
+export interface IENum extends IDocNode {
+    members: Array<{
+        name: string
+        value: string,
+    }>
+}
+
 export interface IMethod extends IDocNode {
     params: IDocField[]
     throws: IDocField[]
@@ -67,6 +75,7 @@ export interface IDocument {
     constants: IDocField[]
     dataStructs: IDataStruct[]
     dataTypes: IDataStruct[]
+    enums: IENum[]
     module: IModule
     services: IService[]
     typedDefs: ITypedDefs[]
@@ -80,6 +89,7 @@ const isInclude = (_: ThriftStatement): _ is IncludeDefinition => _.type === Syn
 const isService = (_: ThriftStatement): _ is ServiceDefinition => _.type === SyntaxType.ServiceDefinition
 const isConstant = (_: ThriftStatement): _ is ConstDefinition => _.type === SyntaxType.ConstDefinition
 const isTypedDef = (_: ThriftStatement): _ is TypedefDefinition => _.type === SyntaxType.TypedefDefinition
+const isEnum = (_: ThriftStatement): _ is EnumDefinition => _.type === SyntaxType.EnumDefinition
 const isStructure = (_: ThriftStatement): _ is DataStruct =>
     _.type === SyntaxType.ExceptionDefinition ||
     _.type === SyntaxType.StructDefinition
@@ -111,7 +121,7 @@ const docNode = (t: DataType | DataStruct | ConstDefinition): IDocNode => ({
     name: t.name.value,
 })
 
-const docSection = (t: DataType | DataStruct ): IDataStruct => ({
+const docSection = (t: DataType | DataStruct | EnumDefinition ): IDataStruct => ({
     ...docNode(t),
     fields: isStructure(t) ? t.fields.map((f) => ({
         comments: transformComments(f.comments),
@@ -149,6 +159,16 @@ export const buildDoc = (fileName: string, doc: ThriftDocument): IDocument => {
             .filter(isDataType)
             .sort(sortByName)
             .map(docSection),
+        enums: doc.body
+            .filter(isEnum)
+            .sort(sortByName)
+            .map((e) => ({
+                ...docNode(e),
+                members: e.members.map((m) => ({
+                    name: m.name.value,
+                    value: m.initializer ? getLiteralVal(m.initializer.value) : '',
+                })),
+            })),
         module: {
             comments: filterCommentBlocks(doc.body)
                 .filter(findFirstComment)
