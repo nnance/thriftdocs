@@ -2,7 +2,8 @@
   "name": "thriftdocs",
   "version": "1.0.0",
   "description": "Generate Thrift Docs in Markdown, HTML, etc",
-  "main": "./dist/bin/thriftdocs.js",
+  "main": "dist/index.js",
+  "bin": "dist/bin/thriftdocs.js",
   "scripts": {
     "build": "tsc",
     "lint": "tslint src/**/*",

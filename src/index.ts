@@ -25,6 +25,8 @@ import {
     transformField,
 } from './lib/transform'
 
+export { parse } from '@creditkarma/thrift-parser'
+
 export interface IDocNode {
     comments?: string[] | undefined
     name: string
