@@ -75,7 +75,8 @@ Key | Field | Type | Description | Required | Default value
 
 ### Typedef: MyInteger (i32)
 
-> Thrift lets you do typedefs to get pretty names for your types. Standard C style here.
+> Thrift lets you do typedefs to get pretty names for your types. Standard
+>  C style here.
 
 ## Constants
 

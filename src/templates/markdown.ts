@@ -46,11 +46,11 @@ ${d.comments ? d.comments.map((c) => `> ${c}\n`).join('') : '\n'}
 `).join('')
 }## Types
 
-### Typedef: MyInteger (i32)
+${_.typedDefs.map((d) => `### Typedef: ${d.name} (${d.type})
 
-> Thrift lets you do typedefs to get pretty names for your types. Standard C style here.
-
-## Constants
+${d.comments ? d.comments.map((c) => `> ${c}\n`).join('') : '\n'}
+`).join('')
+}## Constants
 
 Constant | Type | Value | Notes
 --- | --- | --- | ---

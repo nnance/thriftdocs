@@ -45,6 +45,10 @@ export interface IConstant extends IDocNode {
     value: string
 }
 
+export interface ITypedDefs extends IDocNode {
+    type: string
+}
+
 export interface IMethod extends IDocNode {
     params: IDocField[]
     throws: IDocField[]
@@ -65,6 +69,7 @@ export interface IDocument {
     dataTypes: IDataStruct[]
     module: IModule
     services: IService[]
+    typedDefs: ITypedDefs[]
 }
 
 type DataType = EnumDefinition | UnionDefinition | StructDefinition | TypedefDefinition
@@ -73,10 +78,11 @@ type Definition = DataType | DataStruct | FunctionDefinition | ConstDefinition
 
 const isInclude = (_: ThriftStatement): _ is IncludeDefinition => _.type === SyntaxType.IncludeDefinition
 const isService = (_: ThriftStatement): _ is ServiceDefinition => _.type === SyntaxType.ServiceDefinition
+const isConstant = (_: ThriftStatement): _ is ConstDefinition => _.type === SyntaxType.ConstDefinition
+const isTypedDef = (_: ThriftStatement): _ is TypedefDefinition => _.type === SyntaxType.TypedefDefinition
 const isStructure = (_: ThriftStatement): _ is DataStruct =>
     _.type === SyntaxType.ExceptionDefinition ||
     _.type === SyntaxType.StructDefinition
-const isConstant = (_: ThriftStatement): _ is ConstDefinition => _.type === SyntaxType.ConstDefinition
 const isDataType = (_: ThriftStatement): _ is DataType =>
     _.type === SyntaxType.EnumDefinition ||
     _.type === SyntaxType.ExceptionDefinition ||
@@ -172,8 +178,16 @@ export const buildDoc = (fileName: string, doc: ThriftDocument): IDocument => {
                             name: t.name.value,
                             type: transformField(t.fieldType),
                         })),
-                    })) as IMethod[],
+                    })),
                 name: _.name.value,
-            })) as IService[],
+            })),
+        typedDefs: doc.body
+            .filter(isTypedDef)
+            .sort(sortByName)
+            .map((t) => ({
+                comments: transformComments(t.comments),
+                name: t.name.value,
+                type: transformField(t.definitionType),
+            })),
     }
 }
