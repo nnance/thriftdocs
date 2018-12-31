@@ -6,6 +6,7 @@ import {
     ConstDefinition,
     EnumDefinition,
     ExceptionDefinition,
+    FieldDefinition,
     FunctionDefinition,
     IncludeDefinition,
     ServiceDefinition,
@@ -121,26 +122,26 @@ const docNode = (t: DataType | DataStruct | ConstDefinition): IDocNode => ({
     name: t.name.value,
 })
 
+const docField = (f: FieldDefinition): IDocField => ({
+    comments: transformComments(f.comments),
+    default: f.defaultValue ? transformConst(f.defaultValue) : '',
+    index: f.fieldID ? f.fieldID.value : '',
+    name: f.name.value,
+    required: f.requiredness || '',
+    type: transformField(f.fieldType),
+})
+
 const docSection = (t: DataType | DataStruct | EnumDefinition ): IDataStruct => ({
     ...docNode(t),
-    fields: isStructure(t) ? t.fields.map((f) => ({
-        comments: transformComments(f.comments),
-        default: f.defaultValue ? transformConst(f.defaultValue) : '',
-        index: f.fieldID ? f.fieldID.value : '',
-        name: f.name.value,
-        required: f.requiredness || '',
-        type: transformField(f.fieldType),
-    })) : [],
+    fields: isStructure(t) ? t.fields.map(docField) : [],
     type: t.type.split('Definition')[0],
 })
 
-const docConstant = (t: ConstDefinition): IConstant => {
-    return {
-        ...docNode(t),
-        type: transformField(t.fieldType),
-        value: transformConst(t.initializer),
-    }
-}
+const docConstant = (t: ConstDefinition): IConstant => ({
+    ...docNode(t),
+    type: transformField(t.fieldType),
+    value: transformConst(t.initializer),
+})
 
 const sortByName = ( a: Definition, b: Definition ) =>
     a.name.value > b.name.value ? 1 : a.name.value < b.name.value ? -1 : 0
@@ -189,15 +190,9 @@ export const buildDoc = (fileName: string, doc: ThriftDocument): IDocument => {
                     .sort(sortByName)
                     .map((f) => ({
                         name: f.name.value,
-                        params: f.fields.map((p) => ({
-                            name: p.name.value,
-                            type: transformField(p.fieldType),
-                        })),
+                        params: f.fields.map(docField),
                         return: transformField(f.returnType),
-                        throws: f.throws.map((t) => ({
-                            name: t.name.value,
-                            type: transformField(t.fieldType),
-                        })),
+                        throws: f.throws.map(docField),
                     })),
                 name: _.name.value,
             })),

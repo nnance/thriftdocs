@@ -13,6 +13,9 @@ const consts = (_: IDocument) => _.constants.map((c) => c.name).join('<br>')
 const params = (m: IMethod) => fieldList(m.params)
 const throws = (m: IMethod) => m.throws.length ? ' throws ' + fieldList(m.throws) : ''
 
+const blockComments = (d: string[] | undefined) => d ? d.map((s) => `> ${s}\n`).join('') : ''
+const colComments = (d: string[] | undefined) => d ? d.join('<br>') : ''
+
 export const transform = (_: IDocument) => `
 # Thrift module: ${_.module.name}
 
@@ -40,22 +43,23 @@ ${_.dataStructs.map((d) => `### ${d.type}: ${d.name}
 
 Key | Field | Type | Description | Required | Default value
 --- | --- | --- | --- | --- | ---
-${d.fields.map((f) => `${f.index} | ${f.name} | ${f.type} | ${f.comments} | ${f.required} | ${f.default}`).join('\n')}
+${d.fields.map((f) =>
+    `${f.index} | ${f.name} | ${f.type} | ${colComments(f.comments)} | ${f.required} | ${f.default}`).join('\n')}
 
-${d.comments ? d.comments.map((c) => `> ${c}\n`).join('') : '\n'}
+${blockComments(d.comments)}
 `).join('')
 }## Types
 
 ${_.typedDefs.map((d) => `### Typedef: ${d.name} (${d.type})
 
-${d.comments ? d.comments.map((c) => `> ${c}\n`).join('') : '\n'}
+${blockComments(d.comments)}
 `).join('\n')
 }## Constants
 
 Constant | Type | Value | Notes
 --- | --- | --- | ---
 ${_.constants.map((d) =>
-    `${d.name} | ${d.type} | ${d.value} | ${d.comments ? d.comments.join('<br>') : ''}`).join('\n')}
+    `${d.name} | ${d.type} | ${d.value} | ${colComments(d.comments)}`).join('\n')}
 
 ## Enumerations
 
@@ -63,9 +67,10 @@ ${_.enums.map((d) => `### ${d.name}
 
 Name | Value
 --- | ---
-${d.members.map((f) => `${f.name} | ${f.value}`).join('\n')}
+${d.members.map((f) =>
+    `${f.name} | ${f.value}`).join('\n')}
 
-${d.comments ? d.comments.map((c) => `> ${c}\n`).join('') : '\n'}
+${blockComments(d.comments)}
 `).join('')
 }
 `
