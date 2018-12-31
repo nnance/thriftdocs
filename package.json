@@ -6,8 +6,8 @@
   "scripts": {
     "build": "tsc",
     "lint": "tslint src/**/*",
-    "test": "mocha ./dist/test/**/*.js --reporter dot",
-    "test:watch": "mocha ./dist/test/**/*.js --watch --reporter dot"
+    "test": "mocha --reporter dot './dist/test/**/*.spec.js'",
+    "test:watch": "mocha --watch --reporter dot './dist/test/**/*.spec.js'"
   },
   "keywords": [
     "thrift",
