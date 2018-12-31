@@ -5,6 +5,7 @@ import {
     CommentBlock,
     ConstDefinition,
     EnumDefinition,
+    EnumMember,
     ExceptionDefinition,
     FieldDefinition,
     FunctionDefinition,
@@ -27,6 +28,7 @@ import {
 export interface IDocNode {
     comments?: string[] | undefined
     name: string
+    value?: string
 }
 
 export interface IDocField extends IDocNode {
@@ -34,7 +36,6 @@ export interface IDocField extends IDocNode {
     type: string
     index?: number | string
     required?: string
-    value?: string
 }
 
 export interface IDataStruct extends IDocNode {
@@ -42,20 +43,12 @@ export interface IDataStruct extends IDocNode {
     type: string
 }
 
-export interface IConstant extends IDocNode {
-    type: string
-    value: string
-}
-
-export interface ITypedDefs extends IDocNode {
+export interface ITypedDef extends IDocNode {
     type: string
 }
 
 export interface IENum extends IDocNode {
-    members: Array<{
-        name: string
-        value: string,
-    }>
+    members: IDocNode[]
 }
 
 export interface IMethod extends IDocNode {
@@ -75,11 +68,10 @@ export interface IModule extends IDocNode {
 export interface IDocument {
     constants: IDocField[]
     dataStructs: IDataStruct[]
-    dataTypes: IDataStruct[]
     enums: IENum[]
     module: IModule
     services: IService[]
-    typedDefs: ITypedDefs[]
+    typedDefs: ITypedDef[]
 }
 
 type DataType = EnumDefinition | UnionDefinition | StructDefinition | TypedefDefinition
@@ -112,38 +104,74 @@ const findFirstComment = (_: CommentBlock, index: number) =>
 // empty comment lines start with *, remove it
 const fixEmptyComments = (lines: string[]) => lines.map((l) => l === '*' ? '' : l)
 
-const transformComments = (_: Comment[]) => _
-    .filter((c) => c.type === SyntaxType.CommentBlock)
-    .reduce((prev, b) => prev.concat(b.value), [] as string[])
-    .map((l) => l === '*' ? '' : l)
-
-const docNode = (t: DataType | DataStruct | ConstDefinition): IDocNode => ({
-    comments: transformComments(t.comments),
-    name: t.name.value,
+const docNode = (_: DataType | DataStruct | ConstDefinition | EnumMember |
+    FunctionDefinition | ServiceDefinition | FieldDefinition): IDocNode => ({
+        comments: _.comments
+            .filter((c) => c.type === SyntaxType.CommentBlock)
+            .reduce((prev, b) => prev.concat(b.value), [] as string[])
+            .map((l) => l === '*' ? '' : l),
+        name: _.name.value,
 })
 
-const docField = (f: FieldDefinition): IDocField => ({
-    comments: transformComments(f.comments),
-    default: f.defaultValue ? transformConst(f.defaultValue) : '',
-    index: f.fieldID ? f.fieldID.value : '',
-    name: f.name.value,
-    required: f.requiredness || '',
-    type: transformField(f.fieldType),
+const docType = (_: DataType | DataStruct | EnumDefinition) => ({
+    type: _.type.split('Definition')[0],
 })
 
-const docSection = (t: DataType | DataStruct | EnumDefinition ): IDataStruct => ({
-    ...docNode(t),
-    fields: isStructure(t) ? t.fields.map(docField) : [],
-    type: t.type.split('Definition')[0],
+const docFieldType = (_: FieldDefinition | ConstDefinition ) => ({
+    type: transformField(_.fieldType),
 })
 
-const docConstant = (t: ConstDefinition): IConstant => ({
-    ...docNode(t),
-    type: transformField(t.fieldType),
-    value: transformConst(t.initializer),
+const docField = (_: FieldDefinition): IDocField => ({
+    ...docNode(_),
+    ...docFieldType(_),
+    default: _.defaultValue ? transformConst(_.defaultValue) : '',
+    index: _.fieldID ? _.fieldID.value : '',
+    required: _.requiredness || '',
 })
 
-const sortByName = ( a: Definition, b: Definition ) =>
+const docSection = (_: DataType | DataStruct | EnumDefinition ): IDataStruct => ({
+    ...docNode(_),
+    ...docType(_),
+    fields: isStructure(_) ? _.fields.map(docField) : [],
+})
+
+const docConstant = (_: ConstDefinition): ITypedDef => ({
+    ...docNode(_),
+    ...docFieldType(_),
+    value: transformConst(_.initializer),
+})
+
+const docEnum = (_: EnumDefinition): IENum => ({
+    ...docNode(_),
+    members: _.members.map((m) => ({
+        ...docNode(m),
+        value: m.initializer ? getLiteralVal(m.initializer.value) : '',
+    })),
+})
+
+const docDataType = (_: DataType): ITypedDef => ({
+    ...docNode(_),
+    ...docType(_),
+})
+
+const docFunction = (_: FunctionDefinition): IMethod => ({
+    ...docNode(_),
+    params: _.fields.map(docField),
+    return: transformField(_.returnType),
+    throws: _.throws.map(docField),
+})
+
+const docTypedDef = (_: TypedefDefinition): ITypedDef => ({
+    ...docNode(_),
+    type: transformField(_.definitionType),
+})
+
+const docServiceDef = (_: ServiceDefinition): IService => ({
+    ...docNode(_),
+    methods: _.functions.sort(sortByName).map(docFunction),
+})
+
+const sortByName = (a: Definition, b: Definition) =>
     a.name.value > b.name.value ? 1 : a.name.value < b.name.value ? -1 : 0
 
 export const buildDoc = (fileName: string, doc: ThriftDocument): IDocument => {
@@ -156,20 +184,10 @@ export const buildDoc = (fileName: string, doc: ThriftDocument): IDocument => {
             .filter(isStructure)
             .sort(sortByName)
             .map(docSection),
-        dataTypes: doc.body
-            .filter(isDataType)
-            .sort(sortByName)
-            .map(docSection),
         enums: doc.body
             .filter(isEnum)
             .sort(sortByName)
-            .map((e) => ({
-                ...docNode(e),
-                members: e.members.map((m) => ({
-                    name: m.name.value,
-                    value: m.initializer ? getLiteralVal(m.initializer.value) : '',
-                })),
-            })),
+            .map(docEnum),
         module: {
             comments: filterCommentBlocks(doc.body)
                 .filter(findFirstComment)
@@ -177,32 +195,15 @@ export const buildDoc = (fileName: string, doc: ThriftDocument): IDocument => {
             dataTypes: doc.body
                 .filter(isDataType)
                 .sort(sortByName)
-                .map((t) => ({
-                    name: t.name.value,
-                    type: t.type.split('Definition')[0],
-                })),
+                .map(docDataType),
             name: path.parse(fileName).base.split('.')[0],
         },
         services: doc.body
             .filter(isService)
-            .map((_) => ({
-                methods: _.functions
-                    .sort(sortByName)
-                    .map((f) => ({
-                        name: f.name.value,
-                        params: f.fields.map(docField),
-                        return: transformField(f.returnType),
-                        throws: f.throws.map(docField),
-                    })),
-                name: _.name.value,
-            })),
+            .map(docServiceDef),
         typedDefs: doc.body
             .filter(isTypedDef)
             .sort(sortByName)
-            .map((t) => ({
-                comments: transformComments(t.comments),
-                name: t.name.value,
-                type: transformField(t.definitionType),
-            })),
+            .map(docTypedDef),
     }
 }

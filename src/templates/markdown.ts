@@ -8,7 +8,7 @@ import {
 const fieldList = (_: IDocField[]) => _.map((p) => p.type + ' ' + p.name).join(', ')
 
 const methods = (_: IService) => _.methods.map((m) => m.name).join('<br>')
-const types = (_: IDocument) => _.dataTypes.map((t) => t.name).join('<br>')
+const types = (_: IDocument) => _.module.dataTypes.map((t) => t.name).join('<br>')
 const consts = (_: IDocument) => _.constants.map((c) => c.name).join('<br>')
 const params = (m: IMethod) => fieldList(m.params)
 const throws = (m: IMethod) => m.throws.length ? ' throws ' + fieldList(m.throws) : ''

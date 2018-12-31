@@ -20,7 +20,6 @@ import {
     SyntaxType,
     VoidType,
 } from '@creditkarma/thrift-parser'
-import { join } from 'path';
 
 export const transformField = (fld: SyntaxNode): string => {
     function syntaxNodeTransform<U>(
