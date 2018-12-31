@@ -13,12 +13,14 @@ import {
     IntegerLiteral,
     ListType,
     MapType,
+    PropertyAssignment,
     SetType,
     StringLiteral,
     SyntaxNode,
     SyntaxType,
     VoidType,
 } from '@creditkarma/thrift-parser'
+import { join } from 'path';
 
 export const transformField = (fld: SyntaxNode): string => {
     function syntaxNodeTransform<U>(
@@ -28,6 +30,7 @@ export const transformField = (fld: SyntaxNode): string => {
         g: (_: MapType) => U,
         h: (_: SetType) => U,
         i: (_: BaseType) => U,
+        j: (_: PropertyAssignment) => U,
         z: (_: Identifier) => U,
     ): U {
         switch (r.type) {
@@ -45,6 +48,7 @@ export const transformField = (fld: SyntaxNode): string => {
             case SyntaxType.I16Keyword: return i(r as BaseType)
             case SyntaxType.I32Keyword: return i(r as BaseType)
             case SyntaxType.I64Keyword: return i(r as BaseType)
+            case SyntaxType.PropertyAssignment: return j(r as PropertyAssignment)
             default: return z(r as Identifier)
         }
     }
@@ -53,9 +57,10 @@ export const transformField = (fld: SyntaxNode): string => {
         fld,
         (e) => `void`,
         (f) => `list<${transformField(f.valueType)}>`,
-        (g) => `map<${transformField(g.valueType)}>`,
+        (g) => `map<${transformField(g.keyType)}, ${transformField(g.valueType)}>`,
         (h) => `set<${transformField(h.valueType)}>`,
         (i) => i.type.split('Keyword')[0].toLowerCase(),
+        (j) => `${transformConst(j.name)}:${transformConst(j.initializer)}`,
         (z) => `[${z.value}](#${z.value})`,
     )
 }
@@ -108,6 +113,7 @@ export const transformConst = (fld: ConstValue) => {
             case SyntaxType.ConstMap: return f(r as ConstMap)
             case SyntaxType.DoubleConstant: return g((r as DoubleConstant).value)
             case SyntaxType.IntConstant: return g((r as IntConstant).value)
+            case SyntaxType.StringLiteral: return g(r)
             default: return z(r as Identifier)
         }
     }
@@ -115,7 +121,7 @@ export const transformConst = (fld: ConstValue) => {
     return constTransform(
         fld,
         (e) => `list<${transformField(e)}>`,
-        (f) => `map<${transformField(f)}>`,
+        (f) => `{${f.properties.map(transformField).join(', ')}}`,
         getLiteralVal,
         (z) => `[${z.value}](#${z.value})`,
     )

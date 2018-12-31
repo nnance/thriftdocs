@@ -23,9 +23,10 @@ ${_.module.comments ? `\`\`\`
 ${_.module.comments.join('\n')}
 \`\`\`` : ''}
 
-Module | Services | Methods | Data types | Constants |
---- | --- | --- | --- | --- |
-${_.services.map((s) => `${_.module.name} | ${s.name} | ${methods(s)} | ${types(_)} | ${consts(_)} |`).join('\n')}
+Module | Services | Methods | Data types | Constants
+--- | --- | --- | --- | ---
+${_.services.map((s) =>
+    [_.module.name, s.name, methods(s), types(_), consts(_)].join(' | ')).join('\n')}
 
 ## Services
 
@@ -44,7 +45,7 @@ ${_.dataStructs.map((d) => `### ${d.type}: ${d.name}
 Key | Field | Type | Description | Required | Default value
 --- | --- | --- | --- | --- | ---
 ${d.fields.map((f) =>
-    `${f.index} | ${f.name} | ${f.type} | ${colComments(f.comments)} | ${f.required} | ${f.default}`).join('\n')}
+    [f.index, f.name, f.type, colComments(f.comments), f.required, f.default].join(' | ')).join('\n')}
 
 ${blockComments(d.comments)}
 `).join('')
@@ -59,7 +60,7 @@ ${blockComments(d.comments)}
 Constant | Type | Value | Notes
 --- | --- | --- | ---
 ${_.constants.map((d) =>
-    `${d.name} | ${d.type} | ${d.value} | ${colComments(d.comments)}`).join('\n')}
+    [d.name, d.type, d.value, colComments(d.comments)].join(' | ')).join('\n')}
 
 ## Enumerations
 
@@ -68,7 +69,7 @@ ${_.enums.map((d) => `### ${d.name}
 Name | Value
 --- | ---
 ${d.members.map((f) =>
-    `${f.name} | ${f.value}`).join('\n')}
+    [f.name, f.value].join(' | ')).join('\n')}
 
 ${blockComments(d.comments)}
 `).join('')

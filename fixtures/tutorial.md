@@ -19,9 +19,9 @@ The first thing to know about are types. The available types in Thrift are:
  Did you also notice that Thrift supports C style comments?
 ```
 
-Module | Services | Methods | Data types | Constants |
---- | --- | --- | --- | --- |
-tutorial | Calculator | add<br>calculate<br>ping<br>zip | InvalidOperation<br>MyInteger<br>Operation<br>Work | INT32CONSTANT<br>MAPCONSTANT |
+Module | Services | Methods | Data types | Constants
+--- | --- | --- | --- | ---
+tutorial | Calculator | add<br>calculate<br>ping<br>zip | InvalidOperation<br>MyInteger<br>Operation<br>Work | INT32CONSTANT<br>MAPCONSTANT
 
 ## Services
 
@@ -83,7 +83,7 @@ Key | Field | Type | Description | Required | Default value
 Constant | Type | Value | Notes
 --- | --- | --- | ---
 INT32CONSTANT | i32 | 9853 | Thrift also lets you define constants for use across languages. Complex<br> types and structs are specified using JSON notation.
-MAPCONSTANT | map<string,string> | {'hello':'world', 'goodnight':'moon'}
+MAPCONSTANT | map<string, string> | {"hello":"world", "goodnight":"moon"} | 
 
 ## Enumerations
 
