@@ -3,7 +3,7 @@ import {
     IDocument,
     IMethod,
     IService,
-} from '../index'
+} from '../types'
 
 const fieldList = (_: IDocField[]) => _.map((p) => p.type + ' ' + p.name).join(', ')
 

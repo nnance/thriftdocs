@@ -13,12 +13,12 @@ import {
     ThriftDocument,
 } from '@creditkarma/thrift-parser'
 
-import { buildDoc, IDocument } from '../index'
+import { buildDoc } from '../buildDoc'
 
 import { transform  } from '../templates/markdown'
 
-const fixtureFile = './fixtures/tutorial.thrift'
-const exampleMarkdown = './fixtures/tutorial.md'
+const fixtureFile = './fixtures/tutorial/tutorial.thrift'
+const exampleMarkdown = './fixtures/tutorial/tutorial.md'
 
 describe('When generating markdown', () => {
     let results: string[]
