@@ -21,7 +21,7 @@ The first thing to know about are types. The available types in Thrift are:
 
 Module | Services | Methods | Data types | Constants
 --- | --- | --- | --- | ---
-tutorial | Calculator | add<br>calculate<br>ping<br>zip | InvalidOperation<br>MyInteger<br>Operation<br>Work | INT32CONSTANT<br>MAPCONSTANT
+[tutorial](#) | [Calculator](./tutorial.md#Calculator) | [add](./tutorial.md#Function-add)<br>[calculate](./tutorial.md#Function-calculate)<br>[ping](./tutorial.md#Function-ping)<br>[zip](./tutorial.md#Function-zip) | [InvalidOperation](./tutorial.md#Exception-InvalidOperation)<br>[MyInteger](./tutorial.md#Typedef-MyInteger-i32)<br>[Operation](./tutorial.md#Operation)<br>[Work](./tutorial.md#Struct-Work) | [INT32CONSTANT](./tutorial.md#Constants)<br>[MAPCONSTANT](./tutorial.md#Constants)
 
 ## Services
 
@@ -33,7 +33,7 @@ tutorial | Calculator | add<br>calculate<br>ping<br>zip | InvalidOperation<br>My
 
 #### Function: calculate
 
-> i32 calculate(i32 logid, [Work](#Work) w) throws [InvalidOperation](#InvalidOperation) ouch
+> i32 calculate(i32 logid, [Work](#Struct-Work) w) throws [InvalidOperation](#Exception-InvalidOperation) ouch
 
 #### Function: ping
 
