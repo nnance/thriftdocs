@@ -15,7 +15,7 @@ import {
 
 import { buildDoc } from '../buildDoc'
 
-import { transform  } from '../templates/markdown'
+import { transform  } from '../templates/markdown/markdown'
 
 const fixtureFile = './fixtures/tutorial/tutorial.thrift'
 const exampleMarkdown = './fixtures/tutorial/tutorial.md'
