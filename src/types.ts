@@ -7,6 +7,8 @@ import {
     ServiceDefinition,
     StructDefinition,
     SyntaxType,
+    ThriftDocument,
+    ThriftErrors,
     ThriftStatement,
     TypedefDefinition,
     UnionDefinition,
@@ -67,3 +69,5 @@ export const isDataType = (_: ThriftStatement): _ is DataType => _.type === Synt
     _.type === SyntaxType.UnionDefinition ||
     _.type === SyntaxType.StructDefinition ||
     _.type === SyntaxType.TypedefDefinition;
+export const isDocument = (_: ThriftDocument | ThriftErrors): _ is ThriftDocument =>
+    _.type === SyntaxType.ThriftDocument
