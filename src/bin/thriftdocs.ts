@@ -51,7 +51,7 @@ const logger = log(console)
 const logResults = (results: Array<Promise<boolean>>) =>
     logger.log(`Generated ${results.length} documents to ${outputDir}`)
 
-const transformToOutput = (sourceFile: string) => (includes: string[]): ISourceOutput[] => {
+const buildSourceOutputs = (sourceFile: string) => (includes: string[]): ISourceOutput[] => {
     return includes.map((file) => {
         const getOutputName = (name: string) => {
             const parsedPath = path.parse(name)
@@ -75,11 +75,8 @@ const transformToOutput = (sourceFile: string) => (includes: string[]): ISourceO
     }).reduce((p, c) => p.concat(c), [])
 }
 
-const outputFile = (file: string) => (md: string) => {
-    const parsedPath = path.parse(file)
-    const fullPath = path.resolve(outputDir, '.') + '/' + parsedPath.name + '.md'
-    return util.promisify(fs.writeFile)(fullPath, md, { encoding: 'utf-8' }).then(() => true)
-}
+const outputFile = (file: string) => (md: string) =>
+    util.promisify(fs.writeFile)(file, md, { encoding: 'utf-8' }).then(() => true)
 
 const generateDocs = (sourceFile: string) => (includes: ISourceOutput[]) => includes.map((file) =>
     loadFile(file.source)
@@ -94,7 +91,7 @@ if (outputFile) {
         .then(parse)
         .then(isDocumentOrThrow)
         .then(getIncludes(fileName))
-        .then(transformToOutput(fileName))
+        .then(buildSourceOutputs(fileName))
         .then(generateDocs(fileName))
         .then(logResults)
         .catch(logger.error)
