@@ -8,7 +8,9 @@
     "build": "tsc",
     "lint": "tslint src/**/*",
     "test": "mocha --reporter dot './dist/test/**/*.spec.js'",
-    "test:watch": "mocha --watch --reporter dot './dist/test/**/*.spec.js'"
+    "test:watch": "mocha --watch --reporter dot './dist/test/**/*.spec.js'",
+    "test:unit": "mocha --reporter dot './dist/test/unit/**/*.spec.js'",
+    "test:unit:watch": "mocha --watch --reporter dot './dist/test/unit/**/*.spec.js'"
   },
   "keywords": [
     "thrift",
