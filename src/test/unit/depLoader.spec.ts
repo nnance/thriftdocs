@@ -4,6 +4,8 @@ import {
     it,
 } from 'mocha'
 
+import { curry } from 'lodash/fp'
+
 import {
     documentLoader,
     getDependencyLoader,
@@ -28,7 +30,7 @@ const reader = async (path: string) => {
     return content
 }
 const contentPath = './index.md';
-const loader = documentLoader(reader)
+const loader = curry(documentLoader)(reader)
 
 describe('when loading a document', async () => {
     let doc: IDocument

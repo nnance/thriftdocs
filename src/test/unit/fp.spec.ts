@@ -8,7 +8,7 @@ import {
     compose,
     curry,
     pipe,
-} from '../../lib/fp'
+} from 'lodash/fp'
 
 const add = (x: number) => x + 1
 const multiple = (x: number) => x * 2

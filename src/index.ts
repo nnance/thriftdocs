@@ -9,10 +9,10 @@ export { transform as markdown  } from './templates/markdown/markdown'
 export { transformIndex as markdownIndex  } from './templates/markdown/index'
 
 export type Reader = (path: string) => Promise<string>
-export type DocumentLoader = (reader: Reader) => (path: string) => Promise<IDocument>
+export type DocumentLoader = (reader: Reader, path: string) => Promise<IDocument>
 export type DependencyLoader = (reader: Reader, doc: IDocument) => Array<Promise<IDocument>>
 
-export const documentLoader: DocumentLoader = (reader) => async (path) => {
+export const documentLoader: DocumentLoader = async (reader, path) => {
     const content = await reader(path)
     const doc = parse(content)
     if (isDocument(doc)) {
@@ -23,4 +23,4 @@ export const documentLoader: DocumentLoader = (reader) => async (path) => {
 }
 
 export const getDependencyLoader: DependencyLoader = (reader, doc) =>
-    doc.module.includes.map((_) => documentLoader(reader)(_))
+    doc.module.includes.map((_) => documentLoader(reader, _))
