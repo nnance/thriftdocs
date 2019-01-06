@@ -9,30 +9,37 @@ import * as path from 'path'
 import {
     documentLoader,
     getDependencyLoader,
+    loadAllDependents,
 } from '../../index'
 import { IDocument } from '../../types';
 
-const content = `
-    include "./shared.thrift"
+import {
+    content,
+    includeEnum,
+    includeSource,
+    includeStruct,
+    sharedDoc,
+} from './content.spec'
 
-    struct SharedStruct {
-        1: i32 key
-        2: string value
-    }
-
-    service SharedService {
-        SharedStruct getStruct(1: i32 key)
-    }
-`
 let readerPath: string
-const reader = async (pathName: string) => {
-    readerPath = pathName
-    return content
-}
 const contentPath = 'index.thrift';
-const loader = documentLoader(reader)
 
-describe('when loading a document', async () => {
+const loader = documentLoader(async (fileName: string) => {
+    readerPath = fileName
+    if (fileName.indexOf('index') > -1) {
+        return content
+    } else if (fileName.indexOf('include') > -1) {
+        return includeSource
+    } else if (fileName.indexOf('struct') > -1) {
+        return includeStruct
+    } else if (fileName.indexOf('enum') > -1) {
+        return includeEnum
+    } else {
+        return sharedDoc
+    }
+})
+
+describe('when loading a document', () => {
     let doc: IDocument
 
     before(async () => {
@@ -42,12 +49,12 @@ describe('when loading a document', async () => {
     it('should call the reader with the file path', () => {
         expect(readerPath).to.equal(contentPath)
     })
-    it('should provide a IDocument with one data structure', () => {
-        expect(doc.dataStructs.length).to.equal(1)
+    it('should provide a IDocument with one service', () => {
+        expect(doc.services.length).to.equal(1)
     })
 })
 
-describe('when loading dependencies', async () => {
+describe('when loading dependencies', () => {
     let deps: IDocument[]
     const expectedNames: string[] = []
     const results: string[] = []
@@ -72,5 +79,31 @@ describe('when loading dependencies', async () => {
     })
     it('should call the loader the first time with a relative path', () => {
         expect(results).to.deep.equal(expectedNames)
+    })
+})
+
+describe('when loading all dependencies', () => {
+    let docs = []
+
+    describe('with a single include', () => {
+        before(async () => {
+            const doc = await loader(contentPath)
+            docs = await loadAllDependents(getDependencyLoader(loader), doc)
+        })
+
+        it('should load the dependent documents', () => {
+            expect(docs.length).to.equal(1)
+        })
+    })
+
+    describe('with a two levels of dependents', () => {
+        before(async () => {
+            const doc = await loader('include.thrift')
+            docs = await loadAllDependents(getDependencyLoader(loader), doc)
+        })
+
+        it('should load the dependent documents', () => {
+            expect(docs.length).to.equal(2)
+        })
     })
 })
