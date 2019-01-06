@@ -3,23 +3,16 @@ import * as path from 'path'
 import * as util from 'util'
 
 import {
-    buildDoc,
+    documentLoader,
+    getDependencyLoader,
     markdown,
     markdownIndex,
-    parse,
 } from '../index'
 
 import { log } from '../lib/logger'
 
 import {
-    ThriftDocument,
-    ThriftErrors,
-} from '@creditkarma/thrift-parser';
-
-import {
     IDocument,
-    isDocument,
-    isInclude,
 } from '../types';
 
 const args = process.argv.slice(2)
@@ -29,22 +22,11 @@ const outputDir = args[1] || './'
 
 const loadFile = (fname: string) => util.promisify(fs.readFile)(fname, { encoding: 'utf-8' })
 
-const isDocumentOrThrow = (doc: ThriftDocument | ThriftErrors) => {
-    if (isDocument(doc)) {
-        return doc
-    } else {
-        throw doc
-    }
-}
-
 interface ISourceOutput {
     source: string
     output: string
     generator: (_: IDocument) => string
 }
-
-const getIncludes = (file: string) => (doc: ThriftDocument): string[] =>
-    doc.body.filter(isInclude).map((_) => path.resolve(path.parse(file).dir, _.path.value)).concat([file])
 
 const logger = log(console)
 
@@ -78,22 +60,23 @@ const buildSourceOutputs = (sourceFile: string) => (includes: string[]): ISource
 const outputFile = (file: string) => (md: string) =>
     util.promisify(fs.writeFile)(file, md, { encoding: 'utf-8' }).then(() => true)
 
+const loader = documentLoader(loadFile)
+
 const generateDocs = (sourceFile: string) => (includes: ISourceOutput[]) => includes.map((file) =>
-    loadFile(file.source)
-        .then(parse)
-        .then(isDocumentOrThrow)
-        .then((_) => buildDoc(file.source, _))
+    loader(file.source)
         .then(file.generator)
         .then(outputFile(file.output)))
 
+const loadDependencies = getDependencyLoader(loader)
+
 if (outputFile) {
-    loadFile(fileName)
-        .then(parse)
-        .then(isDocumentOrThrow)
-        .then(getIncludes(fileName))
-        .then(buildSourceOutputs(fileName))
-        .then(generateDocs(fileName))
-        .then(logResults)
+    loader(fileName)
+        .then(loadDependencies)
+        .then((_) => Promise.all(_))
+        .then((_) => _.forEach((m) => logger.log(m.module.fileName)))
+        // // .then(buildSourceOutputs(fileName))
+        // // .then(generateDocs(fileName))
+        // .then(logResults)
         .catch(logger.error)
 } else {
     logger.log('\n  Usage: thriftdocs file [outdir]\n')

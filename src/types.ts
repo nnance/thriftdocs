@@ -44,6 +44,7 @@ export interface IService extends IDocNode {
     methods: IMethod[];
 }
 export interface IModule extends IDocNode {
+    fileName: string;
     includes: string[];
     dataTypes: IDocField[];
 }

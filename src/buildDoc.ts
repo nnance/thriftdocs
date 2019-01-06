@@ -64,6 +64,7 @@ export const buildDoc = (fileName: string, doc: ThriftDocument): IDocument => {
                 .filter(isDataType)
                 .sort(sortByName)
                 .map(docDataType),
+            fileName,
             includes: doc.body
                 .filter(isInclude)
                 .map((_) => _.path.value),

@@ -4,7 +4,7 @@ import {
     it,
 } from 'mocha'
 
-import { curry } from 'lodash/fp'
+import * as path from 'path'
 
 import {
     documentLoader,
@@ -13,7 +13,7 @@ import {
 import { IDocument } from '../../types';
 
 const content = `
-    include "shared.thrift"
+    include "./shared.thrift"
 
     struct SharedStruct {
         1: i32 key
@@ -25,12 +25,12 @@ const content = `
     }
 `
 let readerPath: string
-const reader = async (path: string) => {
-    readerPath = path
+const reader = async (pathName: string) => {
+    readerPath = pathName
     return content
 }
-const contentPath = './index.md';
-const loader = curry(documentLoader)(reader)
+const contentPath = 'index.thrift';
+const loader = documentLoader(reader)
 
 describe('when loading a document', async () => {
     let doc: IDocument
@@ -49,13 +49,28 @@ describe('when loading a document', async () => {
 
 describe('when loading dependencies', async () => {
     let deps: IDocument[]
+    const expectedNames: string[] = []
+    const results: string[] = []
+
+    const loaderMock = (pathName: string) => {
+        results.push(pathName)
+        return loader(pathName)
+    }
 
     before(async () => {
         const doc = await loader(contentPath)
-        deps = await Promise.all(getDependencyLoader(reader, doc))
+        expectedNames.push(path.resolve(path.parse(doc.module.fileName).dir, './shared.thrift'))
+        const depLoader = getDependencyLoader(loaderMock)
+        deps = await Promise.all(depLoader(doc))
     })
 
     it('should provide a IDocument with one data structure', () => {
         expect(deps.length).to.equal(1)
+    })
+    it('should call the loader 1 time', () => {
+        expect(results.length).to.equal(1)
+    })
+    it('should call the loader the first time with a relative path', () => {
+        expect(results).to.deep.equal(expectedNames)
     })
 })
