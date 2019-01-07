@@ -1,4 +1,5 @@
 import {
+    Generator,
     IDocField,
     IDocument,
     IMethod,
@@ -16,7 +17,7 @@ const throws = (m: IMethod) => m.throws.length ? ' throws ' + fieldList(m.throws
 const blockComments = (d: string[] | undefined) => d ? d.map((s) => `> ${s}\n`).join('') : ''
 const colComments = (d: string[] | undefined) => d ? d.join('<br>') : ''
 
-export const transform = (_: IDocument) => `
+export const transform: Generator = () => (_) => `
 # Thrift module: ${_.module.name}
 
 ${_.module.comments ? `\`\`\`

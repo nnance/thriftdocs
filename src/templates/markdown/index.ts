@@ -1,30 +1,31 @@
 import {
-    IDocField,
+    Generator,
     IDocument,
     IService,
+    ISourceOutput,
 } from '../../types'
 
 import { transform as markdown } from './markdown'
+
+import * as path from 'path'
 
 const methods = (_: IService) => _.methods.map((m) => m.name).join('<br>')
 const types = (_: IDocument) => _.module.dataTypes.map((t) => t.name).join('<br>')
 const consts = (_: IDocument) => _.constants.map((c) => c.name).join('<br>')
 
-export const transform = (_: IDocument) => [
-    {
-        content: transformIndex(_),
-        name: 'index.md',
-    }, {
-        content: markdown(_),
-        name: _.module.name,
-    },
-]
+const moduleRef = (outPath: string, _: ISourceOutput) =>
+    `[${_.doc.module.name}](${path.relative(outPath, _.output)})`
 
-export const transformIndex = (_: IDocument) => `
+const serviceRef = (outPath: string, source: ISourceOutput, s: IService) =>
+    `[${s.name}](${path.relative(outPath, source.output)}#${s.name})`
+
+const excludeIndex = (_: ISourceOutput) => _.output.indexOf('index.md') === -1
+
+export const transform: Generator = (output = './', sources = []) => (doc) => `
 # All Thrift Declarations
 
 Module | Services | Methods | Data types | Constants
 --- | --- | --- | --- | ---
-${_.services.map((s) =>
-    [_.module.name, s.name, methods(s), types(_), consts(_)].join(' | ')).join('\n')}
+${sources.filter(excludeIndex).map((_) => _.doc.services.map((s) =>
+    [moduleRef(output, _), serviceRef(output, _, s), methods(s), types(_.doc), consts(_.doc)].join(' | '))).join('\n')}
 `

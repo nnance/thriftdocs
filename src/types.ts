@@ -56,6 +56,14 @@ export interface IDocument {
     services: IService[];
     typedDefs: ITypedDef[];
 }
+export type Generator = (output?: string, sources?: ISourceOutput[]) => (doc: IDocument) => string
+
+export interface ISourceOutput {
+    doc: IDocument
+    output: string
+    generator: Generator
+}
+
 export type DataType = EnumDefinition | UnionDefinition | StructDefinition | TypedefDefinition;
 export type DataStruct = StructDefinition | ExceptionDefinition;
 export type Definition = DataType | DataStruct | FunctionDefinition | ConstDefinition;

@@ -29,7 +29,7 @@ describe('When generating markdown', () => {
         const contents = fs.readFileSync(file, { encoding: 'utf-8' })
         const thriftDoc = parse(contents) as ThriftDocument
         const helper = buildDoc(fixtureFile, thriftDoc)
-        results = transform(helper).split('\n')
+        results = transform()(helper).split('\n')
     })
 
     markdown = fs.readFileSync(resolve(exampleMarkdown), { encoding: 'utf-8' })

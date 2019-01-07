@@ -5,12 +5,11 @@ import { buildDoc } from './buildDoc'
 import { IDocument, isDocument } from './types';
 
 import {
-    curry,
     flatten,
 } from 'lodash/fp';
 
 export { transform as markdown  } from './templates/markdown/markdown'
-export { transformIndex as markdownIndex  } from './templates/markdown/index'
+export { transform as markdownIndex  } from './templates/markdown/index'
 
 export type Reader = (path: string) => Promise<string>
 export type DocumentLoader = (pathName: string) => Promise<IDocument>

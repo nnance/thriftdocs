@@ -13,6 +13,7 @@ import { log } from '../lib/logger'
 
 import {
     IDocument,
+    ISourceOutput,
 } from '../types';
 
 const args = process.argv.slice(2)
@@ -22,36 +23,31 @@ const outputDir = args[1] || './'
 
 const loadFile = (fname: string) => util.promisify(fs.readFile)(fname, { encoding: 'utf-8' })
 
-interface ISourceOutput {
-    source: string
-    output: string
-    generator: (_: IDocument) => string
-}
-
 const logger = log(console)
 
 const logResults = (results: Array<Promise<boolean>>) =>
     logger.log(`Generated ${results.length} documents to ${outputDir}`)
 
-const buildSourceOutputs = (sourceFile: string) => (includes: string[]): ISourceOutput[] => {
-    return includes.map((file) => {
+const buildSourceOutputs = (sourceFile: string) => (includes: IDocument[]): ISourceOutput[] => {
+    return includes.map((_) => {
+        const file = _.module.fileName
         const getOutputName = (name: string) => {
             const parsedPath = path.parse(name)
             return path.resolve(outputDir, '.') + '/' + parsedPath.name + '.md'
         }
 
-        const outputFiles = []
+        const outputFiles: ISourceOutput[] = []
         if (file === sourceFile) {
             outputFiles.push({
+                doc: _,
                 generator: markdownIndex,
                 output: getOutputName('index'),
-                source: file,
             })
         }
         outputFiles.push({
+            doc: _,
             generator: markdown,
             output: getOutputName(file),
-            source: file,
         })
         return outputFiles
     }).reduce((p, c) => p.concat(c), [])
@@ -62,21 +58,22 @@ const outputFile = (file: string) => (md: string) =>
 
 const loader = documentLoader(loadFile)
 
-const generateDocs = (sourceFile: string) => (includes: ISourceOutput[]) => includes.map((file) =>
-    loader(file.source)
-        .then(file.generator)
-        .then(outputFile(file.output)))
+const generateDocs = async (includes: ISourceOutput[]) => includes.map((file) => {
+    const md = file.generator(outputDir, includes)(file.doc)
+    return outputFile(file.output)(md)
+})
 
-const loadDependencies = getDependencyLoader(loader)
+const loadDependencies = (doc: IDocument) =>
+    Promise
+        .all(getDependencyLoader(loader)(doc))
+        .then((_) => _.concat(doc))
 
 if (outputFile) {
     loader(fileName)
         .then(loadDependencies)
-        .then((_) => Promise.all(_))
-        .then((_) => _.forEach((m) => logger.log(m.module.fileName)))
-        // // .then(buildSourceOutputs(fileName))
-        // // .then(generateDocs(fileName))
-        // .then(logResults)
+        .then(buildSourceOutputs(fileName))
+        .then(generateDocs)
+        .then(logResults)
         .catch(logger.error)
 } else {
     logger.log('\n  Usage: thriftdocs file [outdir]\n')
