@@ -1,21 +1,16 @@
 import {
     Generator,
-    IDocField,
-    IDocument,
-    IMethod,
-    IService,
 } from '../../types'
 
-const fieldList = (_: IDocField[]) => _.map((p) => p.type + ' ' + p.name).join(', ')
-
-const methods = (_: IService) => _.methods.map((m) => m.name).join('<br>')
-const types = (_: IDocument) => _.module.dataTypes.map((t) => t.name).join('<br>')
-const consts = (_: IDocument) => _.constants.map((c) => c.name).join('<br>')
-const params = (m: IMethod) => fieldList(m.params)
-const throws = (m: IMethod) => m.throws.length ? ' throws ' + fieldList(m.throws) : ''
-
-const blockComments = (d: string[] | undefined) => d ? d.map((s) => `> ${s}\n`).join('') : ''
-const colComments = (d: string[] | undefined) => d ? d.join('<br>') : ''
+import {
+    blockComments,
+    colComments,
+    consts,
+    methods,
+    params,
+    throws,
+    types,
+} from './lib';
 
 export const transform: Generator = () => (_) => `
 # Thrift module: ${_.module.name}
