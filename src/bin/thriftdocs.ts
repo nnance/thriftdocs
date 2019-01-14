@@ -68,10 +68,9 @@ const generateDocs = async (includes: ISourceOutput[]) => includes.map((file) =>
     return generator(file)
 })
 
-const loadDependencies = (doc: IDocument) =>
-    Promise
-        .all(getDependencyLoader(loader)(doc))
-        .then((_) => _.concat(doc))
+const loadDependencies = (doc: IDocument) => Promise
+    .all(getDependencyLoader(loader)(doc))
+    .then((_) => _.concat(doc))
 
 if (outputFile) {
     loader(fileName)
