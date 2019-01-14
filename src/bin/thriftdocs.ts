@@ -2,6 +2,8 @@ import * as fs from 'fs'
 import * as path from 'path'
 import * as util from 'util'
 
+import { compose } from 'lodash/fp'
+
 import {
     documentLoader,
     getDependencyLoader,
@@ -59,8 +61,11 @@ const outputFile = (file: string) => (md: string) =>
 const loader = documentLoader(loadFile)
 
 const generateDocs = async (includes: ISourceOutput[]) => includes.map((file) => {
-    const md = file.generator(outputDir, includes)(file.doc)
-    return outputFile(file.output)(md)
+    const generator = compose([
+        file.generator(outputDir, includes),
+        outputFile(file.output),
+    ])
+    return generator(file)
 })
 
 const loadDependencies = (doc: IDocument) =>
