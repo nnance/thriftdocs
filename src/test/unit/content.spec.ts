@@ -26,13 +26,9 @@ service SharedService {
 
 export const includeStruct = `
 include "enum.thrift"
-
-struct SharedStruct {
-    1: i32 key
-    2: string value
-    3: enum.Operation operation
-}
+include "share.thrift"
 `
+
 export const includeEnum = `
 include "include.thrift"
 

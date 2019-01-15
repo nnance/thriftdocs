@@ -103,7 +103,7 @@ describe('when loading all dependencies', () => {
         })
 
         it('should load the dependent documents', () => {
-            expect(docs.length).to.equal(2)
+            expect(docs.length).to.equal(3)
         })
     })
 })

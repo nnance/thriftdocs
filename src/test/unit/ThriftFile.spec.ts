@@ -1,8 +1,7 @@
 import { expect } from 'chai'
-import {
-    describe,
-    it,
-} from 'mocha'
+import { describe, it } from 'mocha'
+
+import * as path from 'path'
 
 import {
     content,
@@ -15,19 +14,25 @@ import {
 
 const contentPath = 'index.thrift';
 
-const loader = fileLoader(async (fileName: string) => content)
+const loader = fileLoader(async (pathName: string) => {
+    return {
+        content,
+        file: path.parse(pathName),
+        pathName,
+    }
+})
 
 describe('when loading a ThriftFile', () => {
-    let doc: IThriftFile
+    let thriftFile: IThriftFile
 
     before(async () => {
-        doc = await loader(contentPath)
+        thriftFile = await loader(contentPath)
     })
 
     it('should call the reader with the file path', () => {
-        expect(doc.file.name).to.deep.equal('index')
+        expect(thriftFile.textFile.file.name).to.deep.equal('index')
     })
     it('should provide a ThriftFile with one service', () => {
-        expect(doc.doc.body.length).to.equal(2)
+        expect(thriftFile.doc.body.length).to.equal(2)
     })
 })
