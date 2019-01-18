@@ -60,7 +60,7 @@ export const transformField = (fld: SyntaxNode): string => {
         (h) => `set<${transformField(h.valueType)}>`,
         (i) => i.type.split('Keyword')[0].toLowerCase(),
         (j) => `${transformConst(j.name)}:${transformConst(j.initializer)}`,
-        (z) => `[${z.value}](#${z.value})`,
+        (z) => z.value.split('.')[1] || z.value,
     )
 }
 
@@ -122,6 +122,6 @@ export const transformConst = (fld: ConstValue) => {
         (e) => `list<${transformField(e)}>`,
         (f) => `{${f.properties.map(transformField).join(', ')}}`,
         getLiteralVal,
-        (z) => `[${z.value}](#${z.value})`,
+        (z) => z.value.split('.')[1] || z.value,
     )
 }
