@@ -16,12 +16,6 @@ import {
     UnionDefinition,
 } from '@creditkarma/thrift-parser'
 
-import {
-    getLiteralVal,
-    transformConst,
-    transformField,
-} from './lib/transform'
-
 import { IThriftFile } from './ThriftFile';
 import { IThriftGraph } from './ThriftGraph';
 
@@ -102,57 +96,49 @@ const docNode = (_: DataType | DataStruct | ConstDefinition | EnumMember |
         name: _.name.value,
 })
 
-const docType = (_: DataType | DataStruct | EnumDefinition) => ({
-    type: _.type.split('Definition')[0],
-})
-
-const docFieldType = (_: FieldDefinition | ConstDefinition) => ({
-    type: transformField(_.fieldType),
-})
-
 const docField = (_: FieldDefinition): IDocField => ({
     ...docNode(_),
-    ...docFieldType(_),
-    default: _.defaultValue ? transformConst(_.defaultValue) : '',
+    default: _.defaultValue,
     index: _.fieldID ? _.fieldID.value : '',
     required: _.requiredness || '',
+    type: _.fieldType.type,
 })
 
 const docSection = (_: DataType | DataStruct | EnumDefinition): IDataStruct => ({
     ...docNode(_),
-    ...docType(_),
     fields: isStructure(_) ? _.fields.map(docField) : [],
+    type: _.type,
 })
 
 const docConstant = (_: ConstDefinition): ITypedDef => ({
     ...docNode(_),
-    ...docFieldType(_),
-    value: transformConst(_.initializer),
+    type: _.fieldType.type,
+    value: _.initializer.type,
 })
 
 const docEnum = (_: EnumDefinition): IENum => ({
     ...docNode(_),
     members: _.members.map((m) => ({
         ...docNode(m),
-        value: m.initializer ? getLiteralVal(m.initializer.value) : '',
+        value: m.initializer ? m.initializer.value : undefined,
     })),
 })
 
 const docDataType = (_: DataType): ITypedDef => ({
     ...docNode(_),
-    ...docType(_),
+    type: _.type,
 })
 
 const docFunction = (_: FunctionDefinition): IMethod => ({
     ...docNode(_),
     params: _.fields.map(docField),
-    return: transformField(_.returnType),
+    return: _.returnType.type,
     throws: _.throws.map(docField),
 })
 
 const docTypedDef = (_: TypedefDefinition): ITypedDef => ({
     ...docNode(_),
-    type: transformField(_.definitionType),
+    type: _.definitionType.type,
 })
 
 const docServiceDef = (_: ServiceDefinition): IService => ({
@@ -186,7 +172,7 @@ interface IDocNode {
 }
 
 interface IDocField extends IDocNode {
-    default?: string | null;
+    default?: FieldDefinition['defaultValue'];
     type: string;
     index?: number | string;
     required?: string;
@@ -208,7 +194,7 @@ interface IENum extends IDocNode {
 interface IMethod extends IDocNode {
     params: IDocField[];
     throws: IDocField[];
-    return: string;
+    return: SyntaxType;
 }
 
 interface IService extends IDocNode {
